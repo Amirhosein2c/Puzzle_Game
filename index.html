@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Image Tile Puzzle – Physics Paper Mode</title>
+    <title>ARGOMAN Puzzle</title>
     <style>
       body {
         margin: 0;
-        background: #000;
-        color: #eee;
+        background: #f75f45;
+        color: #707070;
         height: 100vh;
         overflow: hidden;
         font-family: Arial, sans-serif;
@@ -29,7 +29,8 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        background: #111;
+        background: #ffffff;
+        /* border: 1px solid rgba(255, 255, 255, 0.15); */
         touch-action: none;
       }
 
@@ -38,9 +39,10 @@
         background-repeat: no-repeat;
         border: 1px solid rgba(255, 255, 255, 0.15);
         box-sizing: border-box;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
         cursor: grab;
-        transition: left 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
-          top 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.3s ease;
+        transition: left 1s cubic-bezier(0.22, 0.61, 0.36, 1),
+          top 1s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 1s ease;
       }
 
       .tile.dragging {
@@ -61,10 +63,10 @@
         bottom: 32px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 28px;
-        color: #4caf50;
+        font-size: 128px;
+        color: #f75f45;
         opacity: 0;
-        transition: opacity 0.4s ease;
+        transition: opacity 1s ease;
       }
 
       #message.show {
@@ -107,7 +109,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #000;
+        background: #ffffff;
         z-index: 9999;
         cursor: pointer;
       }
@@ -117,7 +119,7 @@
       }
 
       .startText {
-        color: #fff;
+        color: #f75f45;
         font-size: clamp(24px, 5vw, 48px);
         letter-spacing: 0.1em;
       }
@@ -136,9 +138,9 @@
     <div id="sideControls">
       <button id="resetBtn">Reset</button>
       <button id="pauseBtn">Pause</button>
-      <button data-size="3">3×3</button>
-      <button data-size="4" class="active">4×4</button>
-      <button data-size="5">5×5</button>
+      <button data-size="2">2x2</button>
+      <button data-size="3" class="active">3×3</button>
+      <button data-size="4">4×4</button>
     </div>
 
     <div id="board"></div>
@@ -162,7 +164,7 @@
         "#sideControls button[data-size]"
       );
 
-      let SIZE = 4;
+      let SIZE = 3;
       let tiles = [];
       const currentImage = "./Argoman_Logo.png";
       let paused = false;
@@ -198,7 +200,7 @@
         movesEl.textContent = "0";
         message.classList.remove("show");
 
-        const boardSize = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+        const boardSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
         const tileSize = boardSize / SIZE;
 
         board.style.width = boardSize + "px";
@@ -228,7 +230,7 @@
           board.appendChild(tile);
         }
 
-        setTimeout(shuffleTiles, 3000);
+        setTimeout(shuffleTiles, 5000);
         startTimer();
       }
 
