@@ -82,16 +82,12 @@
         z-index: 1000;
       }
 
-      #sideControls button,
-      #sideControls input {
+      #sideControls button {
         background: #222;
         color: #eee;
         border: 1px solid #444;
         padding: 10px 14px;
         font-size: 14px;
-      }
-
-      #sideControls button {
         cursor: pointer;
       }
 
@@ -104,9 +100,34 @@
       #sideControls button:hover {
         background: #333;
       }
+
+      #startOverlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        z-index: 9999;
+        cursor: pointer;
+      }
+
+      #startOverlay.hidden {
+        display: none;
+      }
+
+      .startText {
+        color: #fff;
+        font-size: clamp(24px, 5vw, 48px);
+        letter-spacing: 0.1em;
+      }
     </style>
   </head>
   <body>
+    <div id="startOverlay">
+      <div class="startText">Tap to Begin</div>
+    </div>
+
     <div id="hud">
       <div>Time: <span id="time">0.0</span>s</div>
       <div>Moves: <span id="moves">0</span></div>
@@ -115,35 +136,26 @@
     <div id="sideControls">
       <button id="resetBtn">Reset</button>
       <button id="pauseBtn">Pause</button>
-      <input type="file" id="imageInput" accept="image/*" />
-      <div class="sizes">
-        <button data-size="3">3×3</button>
-        <button data-size="4" class="active">4×4</button>
-        <button data-size="5">5×5</button>
-      </div>
+      <button data-size="3">3×3</button>
+      <button data-size="4" class="active">4×4</button>
+      <button data-size="5">5×5</button>
     </div>
 
     <div id="board"></div>
     <div id="message">You win!</div>
 
-    <audio
-      id="swapSound"
-      src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
-    ></audio>
-    <audio
-      id="winSound"
-      src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
-    ></audio>
+    <audio id="swapSound"></audio>
+    <audio id="winSound"></audio>
 
     <script>
       /* ================= STATE ================= */
       const board = document.getElementById("board");
+      const startOverlay = document.getElementById("startOverlay");
       const timeEl = document.getElementById("time");
       const movesEl = document.getElementById("moves");
       const message = document.getElementById("message");
       const swapSound = document.getElementById("swapSound");
       const winSound = document.getElementById("winSound");
-      const imageInput = document.getElementById("imageInput");
       const resetBtn = document.getElementById("resetBtn");
       const pauseBtn = document.getElementById("pauseBtn");
       const sizeButtons = document.querySelectorAll(
@@ -152,19 +164,23 @@
 
       let SIZE = 4;
       let tiles = [];
-      let currentImage = null;
+      const currentImage = "./Argoman_Logo.png";
       let paused = false;
       let moves = 0;
       let startTime = 0;
       let timer = null;
       let zCounter = 1;
+      let allowExit = false;
 
-      /* ================= FULLSCREEN ================= */
-      document.addEventListener(
+      /* ================= FULLSCREEN START ================= */
+      startOverlay.addEventListener(
         "pointerdown",
-        () => {
+        async () => {
+          startOverlay.classList.add("hidden");
           if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
+            try {
+              await document.documentElement.requestFullscreen();
+            } catch (e) {}
           }
         },
         { once: true }
@@ -172,8 +188,6 @@
 
       /* ================= GAME ================= */
       function startGame() {
-        if (!currentImage) return;
-
         clearInterval(timer);
         board.innerHTML = "";
         tiles = [];
@@ -271,15 +285,12 @@
       function handleDrop(tile, tileSize) {
         const rect = tile.getBoundingClientRect();
         const boardRect = board.getBoundingClientRect();
-
         const col = Math.round((rect.left - boardRect.left) / tileSize);
         const row = Math.round((rect.top - boardRect.top) / tileSize);
         const targetIndex = row * SIZE + col;
 
         moves++;
         movesEl.textContent = moves;
-        swapSound.currentTime = 0;
-        swapSound.play();
 
         if (targetIndex === +tile.dataset.correct) {
           tile.style.left = col * tileSize + "px";
@@ -287,12 +298,6 @@
           tile.classList.add("locked");
           tile.dataset.locked = "true";
           tile.style.zIndex = 0;
-        } else {
-          const jitter = tileSize * 0.05;
-          tile.style.left =
-            col * tileSize + (Math.random() * jitter - jitter / 2) + "px";
-          tile.style.top =
-            row * tileSize + (Math.random() * jitter - jitter / 2) + "px";
         }
 
         if (tiles.every((t) => t.dataset.locked === "true")) finishGame();
@@ -301,8 +306,6 @@
       function finishGame() {
         clearInterval(timer);
         paused = true;
-        winSound.currentTime = 0;
-        winSound.play();
         message.classList.add("show");
       }
 
@@ -316,13 +319,6 @@
           startTime = performance.now() - parseFloat(timeEl.textContent) * 1000;
       });
 
-      imageInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        currentImage = URL.createObjectURL(file);
-        startGame();
-      });
-
       sizeButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
           SIZE = Number(btn.dataset.size);
@@ -331,6 +327,26 @@
           startGame();
         });
       });
+
+      /* ================= FULLSCREEN LOCK ================= */
+      document.addEventListener("touchstart", (e) => {
+        if (e.touches.length >= 3) allowExit = true;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        if (e.touches.length === 0) allowExit = false;
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement && !allowExit) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      });
+
+      /* ================= START ================= */
+      const img = new Image();
+      img.onload = startGame;
+      img.src = currentImage;
     </script>
   </body>
 </html>
