@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Image Tile Puzzle – Exhibition Mode</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #board {
+      position: relative;
+      display: grid;
+      gap: 2px;
+      background: #222;
+      touch-action: none;
+    }
+
+    .tile {
+      position: relative;
+      background-repeat: no-repeat;
+      border: 1px solid #111;
+      transition: transform 0.25s cubic-bezier(.22,.61,.36,1);
+    }
+
+    .dragging {
+      z-index: 10;
+      transition: none;
+      cursor: grabbing;
+    }
+
+    #hud {
+      position: absolute;
+      top: 16px;
+      display: flex;
+      gap: 24px;
+      font-size: 16px;
+    }
+
+    #message {
+      position: absolute;
+      bottom: 32px;
+      font-size: 28px;
+      color: #4caf50;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #message.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <div>Time: <span id="time">0.0</span>s</div>
+    <div>Moves: <span id="moves">0</span></div>
+  </div>
+
+  <div id="board"></div>
+  <div id="message">You win!</div>
+
+  <audio id="swapSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+  <audio id="winSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+
+  <script>
+    /* ================= CONFIG ================= */
+    const IMAGES = [
+      'https://picsum.photos/800/800?random=1',
+      'https://picsum.photos/800/800?random=2',
+      'https://picsum.photos/800/800?random=3'
+    ];
+    const SIZE = 4;
+    const BOARD_SIZE = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+    const PREVIEW_TIME = 3000;
+    const CYCLE_DELAY = 3000;
+
+    /* ================= STATE ================= */
+    const board = document.getElementById('board');
+    const timeEl = document.getElementById('time');
+    const movesEl = document.getElementById('moves');
+    const message = document.getElementById('message');
+    const swapSound = document.getElementById('swapSound');
+    const winSound = document.getElementById('winSound');
+
+    let tiles = [];
+    let imageIndex = 0;
+    let startTime = 0;
+    let timer = null;
+    let moves = 0;
+
+    /* ================= FULLSCREEN ================= */
+    document.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    }, { once: true });
+
+    /* ================= GAME ================= */
+    function startGame() {
+      clearInterval(timer);
+      board.innerHTML = '';
+      tiles = [];
+      moves = 0;
+      movesEl.textContent = '0';
+      message.classList.remove('show');
+
+      const img = IMAGES[imageIndex % IMAGES.length];
+      imageIndex++;
+
+      const tileSize = BOARD_SIZE / SIZE;
+      board.style.width = BOARD_SIZE + 'px';
+      board.style.height = BOARD_SIZE + 'px';
+      board.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${SIZE}, 1fr)`;
+
+      for (let i = 0; i < SIZE * SIZE; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.dataset.correct = i;
+
+        const x = (i % SIZE) * tileSize;
+        const y = Math.floor(i / SIZE) * tileSize;
+
+        tile.style.width = tileSize + 'px';
+        tile.style.height = tileSize + 'px';
+        tile.style.backgroundImage = `url(${img})`;
+        tile.style.backgroundSize = `${BOARD_SIZE}px ${BOARD_SIZE}px`;
+        tile.style.backgroundPosition = `-${x}px -${y}px`;
+
+        enablePhysicsDrag(tile);
+        tiles.push(tile);
+        board.appendChild(tile);
+      }
+
+      setTimeout(shuffleTiles, PREVIEW_TIME);
+      startTimer();
+    }
+
+    function shuffleTiles() {
+      [...tiles].sort(() => Math.random() - 0.5)
+        .forEach(tile => board.appendChild(tile));
+    }
+
+    function startTimer() {
+      startTime = performance.now();
+      timer = setInterval(() => {
+        timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1);
+      }, 100);
+    }
+
+    /* ================= PHYSICS DRAG ================= */
+    function enablePhysicsDrag(tile) {
+      let startX, startY;
+
+      tile.addEventListener('pointerdown', e => {
+        tile.setPointerCapture(e.pointerId);
+        tile.classList.add('dragging');
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      tile.addEventListener('pointermove', e => {
+        if (!tile.classList.contains('dragging')) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        tile.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+
+      tile.addEventListener('pointerup', e => {
+        tile.releasePointerCapture(e.pointerId);
+        tile.classList.remove('dragging');
+        tile.style.transform = '';
+
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target && target.classList.contains('tile') && target !== tile) {
+          swapTiles(tile, target);
+          swapSound.currentTime = 0;
+          swapSound.play();
+          moves++;
+          movesEl.textContent = moves;
+          if (checkWin()) finishGame();
+        }
+      });
+    }
+
+    function swapTiles(a, b) {
+      const aNext = a.nextSibling === b ? a : a.nextSibling;
+      board.insertBefore(b, a);
+      board.insertBefore(a, aNext);
+    }
+
+    function checkWin() {
+      return Array.from(board.children).every((tile, i) => +tile.dataset.correct === i);
+    }
+
+    function finishGame() {
+      clearInterval(timer);
+      winSound.currentTime = 0;
+      winSound.play();
+      message.classList.add('show');
+      setTimeout(startGame, CYCLE_DELAY);
+    }
+
+    /* ================= START ================= */
+    startGame();
+  </script>
+</body>
+</html>
