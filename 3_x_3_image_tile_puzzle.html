@@ -1,310 +1,336 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Image Tile Puzzle – Physics Paper Mode</title>
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #eee;
-      height: 100vh;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      user-select: none;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Image Tile Puzzle – Physics Paper Mode</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: #eee;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        user-select: none;
+      }
 
-    #hud {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 24px;
-      z-index: 1000;
-    }
+      #hud {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 24px;
+        z-index: 1000;
+      }
 
-    #board {
-      position: absolute;
-      inset: 0;
-      margin: auto;
-      background: #111;
-      touch-action: none;
-    }
+      #board {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: #111;
+        touch-action: none;
+      }
 
-    .tile {
-      position: absolute;
-      background-repeat: no-repeat;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-sizing: border-box;
-      cursor: grab;
-      transition: left 0.3s cubic-bezier(.22,.61,.36,1),
-                  top 0.3s cubic-bezier(.22,.61,.36,1),
-                  box-shadow 0.3s ease;
-    }
+      .tile {
+        position: absolute;
+        background-repeat: no-repeat;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-sizing: border-box;
+        cursor: grab;
+        transition: left 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+          top 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.3s ease;
+      }
 
-    .tile.dragging {
-      transition: none;
-      cursor: grabbing;
-      z-index: 100;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
-    }
+      .tile.dragging {
+        transition: none;
+        cursor: grabbing;
+        z-index: 1000 !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      }
 
-    .tile.locked {
-      border: none;
-      cursor: default;
-      box-shadow: none;
-    }
+      .tile.locked {
+        border: none;
+        cursor: default;
+        box-shadow: none;
+      }
 
-    #message {
-      position: fixed;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 28px;
-      color: #4caf50;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
+      #message {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 28px;
+        color: #4caf50;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
 
-    #message.show { opacity: 1; }
-  
-    #sideControls {
-      position: fixed;
-      right: 24px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 1000;
-    }
+      #message.show {
+        opacity: 1;
+      }
 
-    #sideControls button {
-      background: #222;
-      color: #eee;
-      border: 1px solid #444;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-    }
+      #sideControls {
+        position: fixed;
+        right: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+      }
 
-    #sideControls button.active {
-      background: #4caf50;
-      color: #000;
-      border-color: #4caf50;
-    }
+      #sideControls button,
+      #sideControls input {
+        background: #222;
+        color: #eee;
+        border: 1px solid #444;
+        padding: 10px 14px;
+        font-size: 14px;
+      }
 
-    #sideControls button:hover {
-      background: #333;
-    }
-  </style>
-</head>
-<body>
+      #sideControls button {
+        cursor: pointer;
+      }
 
-  <div id="hud">
-    <div>Time: <span id="time">0.0</span>s</div>
-    <div>Moves: <span id="moves">0</span></div>
-  </div>
+      #sideControls button.active {
+        background: #4caf50;
+        color: #000;
+        border-color: #4caf50;
+      }
 
-  <div id="sideControls">
-    <button id="resetBtn">Reset</button>
-    <div class="sizes">
-      <button data-size="3">3×3</button>
-      <button data-size="4" class="active">4×4</button>
-      <button data-size="5">5×5</button>
+      #sideControls button:hover {
+        background: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <div>Time: <span id="time">0.0</span>s</div>
+      <div>Moves: <span id="moves">0</span></div>
     </div>
-  </div>
-    <div>Moves: <span id="moves">0</span></div>
-  </div>
 
-  <div id="board"></div>
-  <div id="message">You win!</div>
+    <div id="sideControls">
+      <button id="resetBtn">Reset</button>
+      <button id="pauseBtn">Pause</button>
+      <input type="file" id="imageInput" accept="image/*" />
+      <div class="sizes">
+        <button data-size="3">3×3</button>
+        <button data-size="4" class="active">4×4</button>
+        <button data-size="5">5×5</button>
+      </div>
+    </div>
 
-  <audio id="swapSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
-  <audio id="winSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+    <div id="board"></div>
+    <div id="message">You win!</div>
 
-  <script>
-    /* ================= CONFIG ================= */
-    const IMAGES = [
-      'https://picsum.photos/900/900?random=11',
-      'https://picsum.photos/900/900?random=12',
-      'https://picsum.photos/900/900?random=13'
-    ];
-    let SIZE = 4;
-    const PREVIEW_TIME = 3000;
-    const NEXT_DELAY = 3000;
+    <audio
+      id="swapSound"
+      src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
+    ></audio>
+    <audio
+      id="winSound"
+      src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
+    ></audio>
 
-    /* ================= STATE ================= */
-    const board = document.getElementById('board');
-    const timeEl = document.getElementById('time');
-    const movesEl = document.getElementById('moves');
-    const message = document.getElementById('message');
-    const swapSound = document.getElementById('swapSound');
-    const winSound = document.getElementById('winSound');
+    <script>
+      /* ================= STATE ================= */
+      const board = document.getElementById("board");
+      const timeEl = document.getElementById("time");
+      const movesEl = document.getElementById("moves");
+      const message = document.getElementById("message");
+      const swapSound = document.getElementById("swapSound");
+      const winSound = document.getElementById("winSound");
+      const imageInput = document.getElementById("imageInput");
+      const resetBtn = document.getElementById("resetBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const sizeButtons = document.querySelectorAll(
+        "#sideControls button[data-size]"
+      );
 
-    let tiles = [];
-    let imageIndex = 0;
-    let startTime = 0;
-    let timer = null;
-    let moves = 0;
-    let zCounter = 1;
+      let SIZE = 4;
+      let tiles = [];
+      let currentImage = null;
+      let paused = false;
+      let moves = 0;
+      let startTime = 0;
+      let timer = null;
+      let zCounter = 1;
 
-    /* ================= FULLSCREEN ================= */
-    document.addEventListener('pointerdown', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-    }, { once: true });
+      /* ================= FULLSCREEN ================= */
+      document.addEventListener(
+        "pointerdown",
+        () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        },
+        { once: true }
+      );
 
-    /* ================= GAME ================= */
-    function startGame() {
-      clearInterval(timer);
-      board.innerHTML = '';
-      tiles = [];
-      moves = 0;
-      zCounter = 1;
-      movesEl.textContent = '0';
-      message.classList.remove('show');
+      /* ================= GAME ================= */
+      function startGame() {
+        if (!currentImage) return;
 
-      const img = IMAGES[imageIndex++ % IMAGES.length];
-      const boardSize = Math.min(innerWidth, innerHeight) * 0.7;
-      const tileSize = boardSize / SIZE;
+        clearInterval(timer);
+        board.innerHTML = "";
+        tiles = [];
+        moves = 0;
+        zCounter = 1;
+        paused = false;
+        pauseBtn.textContent = "Pause";
+        movesEl.textContent = "0";
+        message.classList.remove("show");
 
-      board.style.width = boardSize + 'px';
-      board.style.height = boardSize + 'px';
-      board.style.left = '50%';
-      board.style.top = '50%';
-      board.style.transform = 'translate(-50%, -50%)';
+        const boardSize = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+        const tileSize = boardSize / SIZE;
 
-      for (let i = 0; i < SIZE * SIZE; i++) {
-        const tile = document.createElement('div');
-        tile.className = 'tile';
-        tile.dataset.correct = i;
-        tile.dataset.locked = 'false';
+        board.style.width = boardSize + "px";
+        board.style.height = boardSize + "px";
 
-        const col = i % SIZE;
-        const row = Math.floor(i / SIZE);
+        for (let i = 0; i < SIZE * SIZE; i++) {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.dataset.correct = i;
+          tile.dataset.locked = "false";
 
-        tile.style.width = tileSize + 'px';
-        tile.style.height = tileSize + 'px';
-        tile.style.left = col * tileSize + 'px';
-        tile.style.top = row * tileSize + 'px';
-        tile.style.backgroundImage = `url(${img})`;
-        tile.style.backgroundSize = `${boardSize}px ${boardSize}px`;
-        tile.style.backgroundPosition = `-${col * tileSize}px -${row * tileSize}px`;
+          const col = i % SIZE;
+          const row = Math.floor(i / SIZE);
 
-        enablePaperPhysics(tile, tileSize);
-        tiles.push(tile);
-        board.appendChild(tile);
-      }
+          tile.style.width = tileSize + "px";
+          tile.style.height = tileSize + "px";
+          tile.style.left = col * tileSize + "px";
+          tile.style.top = row * tileSize + "px";
+          tile.style.backgroundImage = `url(${currentImage})`;
+          tile.style.backgroundSize = `${boardSize}px ${boardSize}px`;
+          tile.style.backgroundPosition = `-${col * tileSize}px -${
+            row * tileSize
+          }px`;
 
-      setTimeout(shuffleTiles, PREVIEW_TIME);
-      startTimer();
-    }
+          enablePaperPhysics(tile, tileSize);
+          tiles.push(tile);
+          board.appendChild(tile);
+        }
 
-    function shuffleTiles() {
-      tiles.forEach(tile => {
-        tile.style.left = Math.random() * (board.clientWidth - tile.clientWidth) + 'px';
-        tile.style.top = Math.random() * (board.clientHeight - tile.clientHeight) + 'px';
-        tile.style.zIndex = zCounter++;
-      });
-    }
-
-    function startTimer() {
-      startTime = performance.now();
-      timer = setInterval(() => {
-        timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1);
-      }, 100);
-    }
-
-    /* ================= PAPER PHYSICS ================= */
-    function enablePaperPhysics(tile, tileSize) {
-      let offsetX = 0, offsetY = 0;
-
-      tile.addEventListener('pointerdown', e => {
-        if (tile.dataset.locked === 'true') return;
-        tile.setPointerCapture(e.pointerId);
-        tile.classList.add('dragging');
-        tile.style.zIndex = zCounter++;
-        offsetX = e.clientX - tile.offsetLeft;
-        offsetY = e.clientY - tile.offsetTop;
-      });
-
-      tile.addEventListener('pointermove', e => {
-        if (!tile.classList.contains('dragging')) return;
-        tile.style.left = (e.clientX - offsetX) + 'px';
-        tile.style.top = (e.clientY - offsetY) + 'px';
-      });
-
-      tile.addEventListener('pointerup', e => {
-        tile.releasePointerCapture(e.pointerId);
-        tile.classList.remove('dragging');
-        handleDrop(tile, tileSize);
-      });
-    }
-
-    function handleDrop(tile, tileSize) {
-      const rect = tile.getBoundingClientRect();
-      const boardRect = board.getBoundingClientRect();
-
-      const col = Math.round((rect.left - boardRect.left) / tileSize);
-      const row = Math.round((rect.top - boardRect.top) / tileSize);
-      const targetIndex = row * SIZE + col;
-
-      moves++;
-      movesEl.textContent = moves;
-      swapSound.currentTime = 0;
-      swapSound.play();
-
-      if (targetIndex === +tile.dataset.correct) {
-        // Correct placement
-        tile.style.left = col * tileSize + 'px';
-        tile.style.top = row * tileSize + 'px';
-        tile.classList.add('locked');
-        tile.dataset.locked = 'true';
-        tile.style.zIndex = 0;
-      } else {
-        // Wrong placement → add random offset (paper feel)
-        const jitter = tileSize * 0.05;
-        tile.style.left = col * tileSize + (Math.random() * jitter - jitter / 2) + 'px';
-        tile.style.top = row * tileSize + (Math.random() * jitter - jitter / 2) + 'px';
+        setTimeout(shuffleTiles, 3000);
+        startTimer();
       }
 
-      if (checkWin()) finishGame();
-    }
+      function shuffleTiles() {
+        tiles.forEach((tile) => {
+          tile.style.left =
+            Math.random() * (board.clientWidth - tile.clientWidth) + "px";
+          tile.style.top =
+            Math.random() * (board.clientHeight - tile.clientHeight) + "px";
+          tile.style.zIndex = zCounter++;
+        });
+      }
 
-    function checkWin() {
-      return tiles.every(t => t.dataset.locked === 'true');
-    }
+      function startTimer() {
+        startTime = performance.now();
+        timer = setInterval(() => {
+          if (!paused) {
+            timeEl.textContent = (
+              (performance.now() - startTime) /
+              1000
+            ).toFixed(1);
+          }
+        }, 100);
+      }
 
-    function finishGame() {
-      clearInterval(timer);
-      winSound.currentTime = 0;
-      winSound.play();
-      message.classList.add('show');
-      setTimeout(startGame, NEXT_DELAY);
-    }
+      /* ================= PAPER PHYSICS ================= */
+      function enablePaperPhysics(tile, tileSize) {
+        let offsetX = 0,
+          offsetY = 0;
 
-    /* ================= START ================= */
-    startGame();
+        tile.addEventListener("pointerdown", (e) => {
+          if (paused || tile.dataset.locked === "true") return;
+          tile.setPointerCapture(e.pointerId);
+          tile.classList.add("dragging");
+          tile.style.zIndex = zCounter++;
+          offsetX = e.clientX - tile.offsetLeft;
+          offsetY = e.clientY - tile.offsetTop;
+        });
 
-    /* ================= UI CONTROLS ================= */
-    const resetBtn = document.getElementById('resetBtn');
-    const sizeButtons = document.querySelectorAll('#sideControls button[data-size]');
+        tile.addEventListener("pointermove", (e) => {
+          if (!tile.classList.contains("dragging")) return;
+          tile.style.left = e.clientX - offsetX + "px";
+          tile.style.top = e.clientY - offsetY + "px";
+        });
 
-    resetBtn.addEventListener('click', () => {
-      startGame();
-    });
+        tile.addEventListener("pointerup", (e) => {
+          if (!tile.classList.contains("dragging")) return;
+          tile.releasePointerCapture(e.pointerId);
+          tile.classList.remove("dragging");
+          handleDrop(tile, tileSize);
+        });
+      }
 
-    sizeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        SIZE = Number(btn.dataset.size);
-        sizeButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+      function handleDrop(tile, tileSize) {
+        const rect = tile.getBoundingClientRect();
+        const boardRect = board.getBoundingClientRect();
+
+        const col = Math.round((rect.left - boardRect.left) / tileSize);
+        const row = Math.round((rect.top - boardRect.top) / tileSize);
+        const targetIndex = row * SIZE + col;
+
+        moves++;
+        movesEl.textContent = moves;
+        swapSound.currentTime = 0;
+        swapSound.play();
+
+        if (targetIndex === +tile.dataset.correct) {
+          tile.style.left = col * tileSize + "px";
+          tile.style.top = row * tileSize + "px";
+          tile.classList.add("locked");
+          tile.dataset.locked = "true";
+          tile.style.zIndex = 0;
+        } else {
+          const jitter = tileSize * 0.05;
+          tile.style.left =
+            col * tileSize + (Math.random() * jitter - jitter / 2) + "px";
+          tile.style.top =
+            row * tileSize + (Math.random() * jitter - jitter / 2) + "px";
+        }
+
+        if (tiles.every((t) => t.dataset.locked === "true")) finishGame();
+      }
+
+      function finishGame() {
+        clearInterval(timer);
+        paused = true;
+        winSound.currentTime = 0;
+        winSound.play();
+        message.classList.add("show");
+      }
+
+      /* ================= UI ================= */
+      resetBtn.addEventListener("click", startGame);
+
+      pauseBtn.addEventListener("click", () => {
+        paused = !paused;
+        pauseBtn.textContent = paused ? "Resume" : "Pause";
+        if (!paused)
+          startTime = performance.now() - parseFloat(timeEl.textContent) * 1000;
+      });
+
+      imageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        currentImage = URL.createObjectURL(file);
         startGame();
       });
-    });
-  </script>
-</body>
+
+      sizeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          SIZE = Number(btn.dataset.size);
+          sizeButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          startGame();
+        });
+      });
+    </script>
+  </body>
 </html>
