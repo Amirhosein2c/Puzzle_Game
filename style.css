@@ -118,3 +118,22 @@
         font-size: clamp(24px, 5vw, 48px);
         letter-spacing: 0.1em;
       }
+
+      /* ================= HAND CURSOR ================= */
+        #handCursor {
+        position: fixed;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.8);
+        border: 2px solid #fff;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        display: none;
+        }
+
+        #handCursor.grabbing {
+        background: #4caf50;
+        transform: translate(-50%, -50%) scale(1.3);
+        }
