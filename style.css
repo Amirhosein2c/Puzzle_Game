@@ -1,0 +1,120 @@
+
+      body {
+        margin: 0;
+        background: #f75f45;
+        color: #707070;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        user-select: none;
+      }
+
+      #hud {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 24px;
+        z-index: 1000;
+      }
+
+      #board {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: #ffffff;
+        /* border: 1px solid rgba(255, 255, 255, 0.15); */
+        touch-action: none;
+      }
+
+      .tile {
+        position: absolute;
+        background-repeat: no-repeat;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-sizing: border-box;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        cursor: grab;
+        transition: left 1s cubic-bezier(0.22, 0.61, 0.36, 1),
+          top 1s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 1s ease;
+      }
+
+      .tile.dragging {
+        transition: none;
+        cursor: grabbing;
+        z-index: 1000 !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      .tile.locked {
+        border: none;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      #message {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 128px;
+        color: #f75f45;
+        opacity: 0;
+        transition: opacity 1s ease;
+      }
+
+      #message.show {
+        opacity: 1;
+      }
+
+      #sideControls {
+        position: fixed;
+        right: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+      }
+
+      #sideControls button {
+        background: #222;
+        color: #eee;
+        border: 1px solid #444;
+        padding: 10px 14px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #sideControls button.active {
+        background: #4caf50;
+        color: #000;
+        border-color: #4caf50;
+      }
+
+      #sideControls button:hover {
+        background: #333;
+      }
+
+      #startOverlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        z-index: 9999;
+        cursor: pointer;
+      }
+
+      #startOverlay.hidden {
+        display: none;
+      }
+
+      .startText {
+        color: #f75f45;
+        font-size: clamp(24px, 5vw, 48px);
+        letter-spacing: 0.1em;
+      }
