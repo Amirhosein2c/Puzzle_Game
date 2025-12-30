@@ -138,7 +138,7 @@ body {
 }
 
 .hand-video {
-  width: 5%; /* half the container width */
+  width: 10%; /* half the container width */
   height: auto;
   opacity: 0.5;
 }
