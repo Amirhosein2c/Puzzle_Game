@@ -74,8 +74,10 @@ function startGame() {
 
 function shuffleTiles() {
   tiles.forEach((tile) => {
-    tile.style.left = Math.random() * (board.clientWidth - tile.clientWidth) + "px";
-    tile.style.top = Math.random() * (board.clientHeight - tile.clientHeight) + "px";
+    tile.style.left =
+      Math.random() * (board.clientWidth - tile.clientWidth) + "px";
+    tile.style.top =
+      Math.random() * (board.clientHeight - tile.clientHeight) + "px";
     tile.style.zIndex = zCounter++;
   });
 }
@@ -128,7 +130,6 @@ function handleDrop(tile, tileSize) {
   }
 }
 
-
 /* ================= HAND TRACKING ================= */
 
 // Cursor smoothing state
@@ -163,8 +164,8 @@ const hands = new Hands({
 hands.setOptions({
   maxNumHands: 1,
   modelComplexity: 1,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7,
+  minDetectionConfidence: 0.8,
+  minTrackingConfidence: 0.8,
 });
 
 hands.onResults((results) => {
@@ -214,7 +215,6 @@ hands.onResults((results) => {
 
   if (grabbedTile) moveGrab(smoothX, smoothY);
 });
-
 
 const camera = new Camera(video, {
   onFrame: async () => await hands.send({ image: video }),
